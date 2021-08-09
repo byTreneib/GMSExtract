@@ -50,6 +50,8 @@ class GMSExtract:
     h_pattern = r"(?:(?<!EU)H[0-9]{3})(?:\s*\+\s*(?<!EU)H[0-9]{3})*"
     p_pattern = r"(?:P[0-9]{3})(?:\s*\+\s*P[0-9]{3})*"
     euh_pattern = r"(?:EUH[0-9]{3})(?:\s*\+\s*EUH[0-9]{3})*"
+    wgk_pattern = r"WGK.*?[0-3]"
+    WGK_pattern = r"[Ww]assergefährdungsklasse.*?[0-3]"
 
     @staticmethod
     def read_pdf(filename: str) -> str:
@@ -74,7 +76,7 @@ class GMSExtract:
         page_numbers = set()
         caching = True
         password = ""
-        max_pages = 3
+        max_pages = 12
 
         for page in PDFPage.get_pages(fp, page_numbers, maxpages=max_pages, password=password, caching=caching,
                                       check_extractable=True):
@@ -92,6 +94,7 @@ class GMSExtract:
     def read_pdf_multiple(filenames: List[str]) -> List[str]:
         """
         Read contents of all files in filenames
+
         :param filenames: List containing filenames and paths to pdf files
         :return: List containing the contents of each of the passed pdf files as strings
         """
@@ -107,6 +110,7 @@ class GMSExtract:
     def normalize_string(string: str) -> str:
         """
         Replace all linebreaks with whitespaces and normalize amount of whitespaces around '+' to exactly one
+
         :param string: string that is to be normalized
         :return: normalized string
         """
@@ -116,6 +120,7 @@ class GMSExtract:
     def match_h(string: str) -> List[str]:
         """
         Find all matches for H-Statements in the given input string using regular expressions
+
         :param string: input string containing H-Statements
         :return: list of unique H-Statements as strings
         """
@@ -125,6 +130,7 @@ class GMSExtract:
     def match_p(string: str) -> List[str]:
         """
         Find all matches for P-Statements in the given input string using regular expressions
+
         :param string: input string containing P-Statements
         :return: list of unique P-Statements as strings
         """
@@ -134,42 +140,59 @@ class GMSExtract:
     def match_euh(string: str) -> List[str]:
         """
         Find all matches for EUH-Statements in the given input string using regular expressions
+
         :param string: input string containing EUH-Statements
         :return: list of unique EUH-Statements as strings
         """
         return list(set(re.findall(GMSExtract.euh_pattern, string)))
 
     @staticmethod
-    def process(string: str) -> Tuple[List[str], List[str], List[str]]:
+    def match_wgk(string: str) -> str:
         """
-        Find all matches for H-/P-/EUH-Statements in the given input string.
+        Find first match for WGK (Wassergefährdungsklasse) in the given input string using regular expressions
+
+        :param string: input string containing WGK information
+        :return: WGK as string, empty if none found
+        """
+        match: List[str] = re.findall(GMSExtract.wgk_pattern, string) + re.findall(GMSExtract.WGK_pattern, string)
+        return "" if match == [] else match[0][-1]
+
+    @staticmethod
+    def process(string: str) -> Tuple[List[str], List[str], List[str], str]:
+        """
+        Find all matches for H-/P-/EUH-Statements and WGK (Wassergefährdungsklasse) in the given input string.
+
         :param string: input string containing H-/P-/EUH-Statements
-        :return: tuple of three lists containing the H-/P-/EUH-Statements as described in the designated methods
+        :return: tuple of three lists containing the H-/P-/EUH-Statements as described in the designated methods and WGK
         """
         normalized_string: str = GMSExtract.normalize_string(string)
 
         h_match = GMSExtract.match_h(normalized_string)
         p_match = GMSExtract.match_p(normalized_string)
         euh_match = GMSExtract.match_euh(normalized_string)
+        wgk_match = GMSExtract.match_wgk(normalized_string)
 
-        return h_match, p_match, euh_match
+        return h_match, p_match, euh_match, wgk_match
 
     @staticmethod
-    def print_excel(h_match: List[str], p_match: List[str], euh_match: List[str], filename: str) -> None:
+    def print_excel(h_match: List[str], p_match: List[str], euh_match: List[str], wgk: str, filename: str) -> None:
         """
-        Print the H-/P-/EUH-Statements in a manner that allow the output string to be copy + pasted into excel
+        Print the H-/P-/EUH-Statements and the WGK (Wassergefährdungsklasse) in a manner that allow the output
+        string to be copy + pasted into excel
+
         :param h_match: List containing all matches for H-Statements as described in match_h
         :param p_match: List containing all matches for P-Statements as described in match_p
         :param euh_match: List containing all matches for EUH-Statements as described in match_euh
+        :param wgk: String of WGK ("Wassergefährdungsklasse") value, empty if non found
         :param filename: Name of the file the H-/P-/EUH-Statements were taken from. Empty if not from file
         """
-        if len(h_match) + len(p_match) + len(euh_match) == 0:
+        if len(h_match) + len(p_match) + len(euh_match) + len(wgk) == 0:
             print(f"\nFinished extracting. No Statements were found{(' in ' + filename) if filename != '' else ''}.")
             return
 
         prefix = filename + ": \t" if filename != "" else ""
         print("\nFinished extracting. The following line can be copy + pasted into excel.")
-        print(prefix + "\t".join([", ".join(h_match), ", ".join(p_match), ", ".join(euh_match)]))
+        print(prefix + ", ".join(h_match) + "\t" + ", ".join(p_match) + "\t" + "\t".join([", ".join(euh_match), wgk]))
 
 
 def get_input() -> Tuple[List[str], List[str]]:
@@ -178,6 +201,7 @@ def get_input() -> Tuple[List[str], List[str]]:
     If the text input is recognized to be a path to a pdf file, there will be an attempt to open the file
     and return its contents as text. If the attempt fails or no path was recognized, the input text will
     be returned.
+
     :return: Tuple of a list of the plain input texts or contents of passed pdf file(s) as text and the filenames
     """
     input_buffer = ""
@@ -199,8 +223,13 @@ def get_input() -> Tuple[List[str], List[str]]:
     if input_buffer.split(".")[-1].lower() == "pdf":
         print("\nInterpreting input as path to pdf file(s).")
         try:
-            # Get all files matching input with extension '.pdf' or '.PDF'
-            file_list = glob(input_buffer) + glob("".join(input_buffer.split(".")[:-1]) + ".PDF")
+            # Get all files matching input with extension '.pdf' or '.PDF' without duplicates
+            file_list = glob(input_buffer)
+            file_list_upper = glob(".".join(input_buffer.split(".")[:-1]) + ".PDF")
+            file_list_upper = list(filter(lambda x: ".".join(x.split(".")[:-1]) + ".pdf" not in file_list,
+                                          file_list_upper))
+
+            file_list = list(set(file_list + file_list_upper))
 
             if len(file_list) == 0:
                 raise FileNotFoundError("No files found.")
