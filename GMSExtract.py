@@ -196,10 +196,11 @@ def get_input() -> Tuple[List[str], List[str]]:
 
     input_buffer = input_buffer.strip()
 
-    if input_buffer.split(".")[-1] == "pdf":
+    if input_buffer.split(".")[-1].lower() == "pdf":
         print("\nInterpreting input as path to pdf file(s).")
         try:
-            file_list = glob(input_buffer)
+            # Get all files matching input with extension '.pdf' or '.PDF'
+            file_list = glob(input_buffer) + glob("".join(input_buffer.split(".")[:-1]) + ".PDF")
 
             if len(file_list) == 0:
                 raise FileNotFoundError("No files found.")
