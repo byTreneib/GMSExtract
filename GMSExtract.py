@@ -42,6 +42,7 @@ from pdfminer.layout import LAParams
 from typing import List, Tuple
 from io import StringIO
 from glob import glob
+import sys
 import re
 
 
@@ -188,7 +189,7 @@ def get_input() -> Tuple[List[str], List[str]]:
     while input_read != "" or input_buffer.strip() == "":
         if input_read == "quit":
             print("\nExit keyword detected. Terminating.")
-            quit()
+            sys.exit(0)
 
         input_read = input("> ")
         input_buffer += input_read + " "
@@ -212,6 +213,8 @@ def get_input() -> Tuple[List[str], List[str]]:
 if __name__ == '__main__':
     while True:
         text_inputs, input_files = get_input()
+
+        input_files = map(lambda file: file.split("\\")[-1], input_files)
 
         print("\n" + "#" * 150)
 
