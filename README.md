@@ -9,7 +9,7 @@ within the input. e.g.
 H319, H335, H315	P261, P302 + P352, P280, P305 + P351 + P338, P271	EUH061
 ```
 
-Input may be the path to a pdf file, finished with an empty input line. `*.pdf` will read all PDFs in the current directory.
+Input may be the path to a pdf file, finished with an empty input line. `*.pdf` will read all PDFs in the current directory. <br>
 If a path to a pdf file was recognized the program will confirm, that the input will be interpreted as such.
 ```
 > aceton.pdf
