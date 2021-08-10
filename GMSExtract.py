@@ -16,7 +16,7 @@ If a path to a pdf file was recognized the program will confirm, that the input 
     Interpreting input as path of pdf file.
 
 Input may alternatively be the entire safety data sheet as text, finished with an empty input line.
-    > Sicherheitsinformationen gemäß GHS Gefahrensymbol(e)￼
+    > Sicherheitsinformationen gemäß GHS Gefahrensymbol(e)
     > Gefahrenhinweis(e)
     > H315: Verursacht Hautreizungen.
     > H319: Verursacht schwere Augenreizung.
