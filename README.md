@@ -1,12 +1,12 @@
 # GMSExtract
 
 ### Description
-This script is intended to be used for extracting the H-/P-/EUH-Statements
+This script is intended to be used for extracting the H-/P-/EUH-Statements and the WGK (Wassergefährdungsklasse)
 from chemicals' safety data sheets. The extracted Statements will be returned
-as TAB-separated Lists of the COMMA-separated statements in order of their discovery
+as SEMICOLON-separated Lists of the COMMA-separated statements in order of their discovery
 within the input. e.g.
 ```
-H319, H335, H315	P261, P302 + P352, P280, P305 + P351 + P338, P271	EUH061
+H319, H335, H315;P261, P302 + P352, P280, P305 + P351 + P338, P271;EUH061;1
 ```
 
 Input may be the path to a pdf file, finished with an empty input line. `*.pdf` will read all PDFs in the current directory. <br>
@@ -18,7 +18,9 @@ If a path to a pdf file was recognized the program will confirm, that the input 
 Interpreting input as path of pdf file.
 ```
 
-Input may alternatively be the entire safety data sheet as text, finished with an empty input line.
+Input may alternatively be the entire or partial safety data sheet as text, finished with an empty input line.
+Placement of linebreaks is irrelevant, as they will be replaced with whitespaces in the process. This allows
+text to be copy/pasted into the command line.
 ```
 > Sicherheitsinformationen gemäß GHS Gefahrensymbol(e)
 > Gefahrenhinweis(e)
