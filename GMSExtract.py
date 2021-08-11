@@ -302,7 +302,7 @@ def get_input() -> Tuple[List[str], List[str]]:
             if len(file_list) == 0:
                 raise FileNotFoundError("No files found.")
 
-            file_list.sort()
+            file_list = sorted(file_list)
 
             return GMSExtract.read_pdf_multiple(file_list), file_list
         except FileNotFoundError:
