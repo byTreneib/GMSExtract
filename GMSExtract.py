@@ -258,7 +258,7 @@ class GMSExtract:
             if found:
                 found_statements.append(string)
             else:
-                not_found_statements.append(string)
+                found_statements.append(string)
 
         return "\n".join(found_statements + not_found_statements)
 
@@ -301,6 +301,8 @@ def get_input() -> Tuple[List[str], List[str]]:
 
             if len(file_list) == 0:
                 raise FileNotFoundError("No files found.")
+
+            file_list.sort()
 
             return GMSExtract.read_pdf_multiple(file_list), file_list
         except FileNotFoundError:
