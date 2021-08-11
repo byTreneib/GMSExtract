@@ -53,7 +53,7 @@ class GMSExtract:
     wgk_pattern = re.compile(r"WGK.*?[0-3]")
     WGK_pattern = re.compile(r"[Ww]assergefährdungsklasse.*?[0-3]")
 
-    OUTPUT_SEP = ";"
+    OUTPUT_SEP = "\t"
 
     @staticmethod
     def read_pdf(filename: str) -> str:
@@ -311,6 +311,10 @@ def get_input() -> Tuple[List[str], List[str]]:
 
 
 if __name__ == '__main__':
+    # Clear contents of output file
+    f = open("out.txt", "w+")
+    f.close()
+
     while True:
         text_inputs, input_files = get_input()
 
@@ -318,9 +322,11 @@ if __name__ == '__main__':
 
         print("\n" + "#" * 150 + "\n")
 
-        # for name, text in zip(input_files, text_inputs):
-        #     GMSExtract.print_excel(*GMSExtract.process(text), name)
+        out_string = GMSExtract.string_excel_all(*GMSExtract.process_all(text_inputs), input_files)
+        print(out_string)
 
-        print(GMSExtract.string_excel_all(*GMSExtract.process_all(text_inputs), input_files))
+        with open("out.txt", "a") as out_file:
+            out_file.write(out_string)
+            out_file.write("\n\n")
 
         print("\n" + "#" * 150 + "\n")
