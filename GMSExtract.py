@@ -64,12 +64,12 @@ def timeit(func):
 
 
 class GMSExtract:
-    h_pattern = re.compile(r"(?:(?<!EU)H[0-9]{3}[dDfF]{1,2})(?:\s*\+\s*(?<!EU)H[0-9]{3}[dDfF]{1,2})*")
+    h_pattern = re.compile(r"(?:(?<!EU)H[0-9]{3}[dDfF]{0,2})(?:\s*\+\s*(?<!EU)H[0-9]{3}[dDfF]{0,2})*")
     p_pattern = re.compile(r"(?:P[0-9]{3})(?:\s*\+\s*P[0-9]{3})*")
-    euh_pattern = re.compile(r"(?:EUH[0-9]{3})(?:\s*\+\s*EUH[0-9]{3})*")
+    euh_pattern = re.compile(r"(?:EUH[0-9]{3}[dDfF]?)(?:\s*\+\s*EUH[0-9]{3}[dDfF]?)*")
     wgk_pattern = re.compile(r"WGK.*?[0-3]")
     WGK_pattern = re.compile(r"[Ww]assergefährdungsklasse.*?[0-3]")
-    # cas_pattern = re.compile(r"(?:CAS|cas)-[Nn](?:umme)?(?:UMME)?[rR]:?.*?[0-9]{1,4}-[0-9]{1,2}-[0-9]")
+    cas_pattern = re.compile(r"(?:CAS|cas)-[Nn](?:umme)?(?:UMME)?[rR]:?.*?[0-9]{1,4}-[0-9]{1,2}-[0-9]")
 
     OUTPUT_SEP = "\t"
 
@@ -192,10 +192,10 @@ class GMSExtract:
         match: List[str] = GMSExtract.wgk_pattern.findall(string) + GMSExtract.WGK_pattern.findall(string)
         return "" if match == [] else match[0][-1]
 
-    # @staticmethod
-    # def match_cas(string: str) -> str:
-    #     match: List[str] = GMSExtract.cas_pattern.findall(string)
-    #     return "" if match == [] else match[0].split()[-1].strip()
+    @staticmethod
+    def match_cas(string: str) -> str:
+        match: List[str] = GMSExtract.cas_pattern.findall(string)
+        return "" if match == [] else match[0].split()[-1].strip()
 
     @staticmethod
     # @timeit
