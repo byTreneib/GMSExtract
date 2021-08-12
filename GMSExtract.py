@@ -72,7 +72,7 @@ class GMSExtract:
 
     OUTPUT_SEP = "\t"
 
-    USE_MULTIPROCESSING = True
+    USE_MULTIPROCESSING = False
 
     # @timeit
     @staticmethod
@@ -118,7 +118,7 @@ class GMSExtract:
         return content_text
 
     @staticmethod
-    @timeit
+    # @timeit
     def read_pdf_multiple(filenames: List[str]) -> List[str]:
         """
         Read contents of all files in filenames
@@ -140,7 +140,7 @@ class GMSExtract:
         return file_contents
 
     @staticmethod
-    @timeit
+    # @timeit
     def normalize_string(string: str) -> str:
         """
         Replace all linebreaks with whitespaces and normalize amount of whitespaces around '+' to exactly one
@@ -192,7 +192,7 @@ class GMSExtract:
         return "" if match == [] else match[0][-1]
 
     @staticmethod
-    @timeit
+    # @timeit
     def process(string: str) -> Tuple[List[str], List[str], List[str], str]:
         """
         Find all matches for H-/P-/EUH-Statements and WGK (Wassergefährdungsklasse) in the given input string.
@@ -210,7 +210,7 @@ class GMSExtract:
         return h_match, p_match, euh_match, wgk_match
 
     @staticmethod
-    @timeit
+    # @timeit
     def process_all(strings: List[str]) -> Tuple[List[List[str]], List[List[str]], List[List[str]], List[str]]:
         """
         Process each string in the passed list of strings as described in the process method
@@ -279,7 +279,7 @@ class GMSExtract:
         return return_string, True
 
     @staticmethod
-    @timeit
+    # @timeit
     def string_excel_all(h_matches: List[List[str]], p_matches: List[List[str]], euh_matches: List[List[str]],
                          wgks: List[str], filenames: List[str]) -> str:
         """
