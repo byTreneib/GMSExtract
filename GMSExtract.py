@@ -366,7 +366,7 @@ if __name__ == '__main__':
 
             input_files = list(map(lambda file: file.split("\\")[-1], input_files))
 
-            out_file = open("out.txt", "wb")
+            out_file = open("out.txt", "ab+")
 
             print("\n" + "#" * 150 + "\n")
 
