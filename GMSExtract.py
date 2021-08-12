@@ -35,6 +35,7 @@ Input may alternatively be the entire safety data sheet as text, finished with a
 
 """
 
+from pdfminer.pdfdocument import PDFTextExtractionNotAllowed
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.pdfpage import PDFPage
@@ -103,7 +104,12 @@ class GMSExtract:
         file_contents: List[str] = []
 
         for filename in filenames:
-            file_contents.append(GMSExtract.read_pdf(filename))
+
+            try:
+                file_contents.append(GMSExtract.read_pdf(filename))
+            except PDFTextExtractionNotAllowed:
+                print("Could not read " + filename + " : File is protected.")
+                file_contents.append("")
 
         return file_contents
 
