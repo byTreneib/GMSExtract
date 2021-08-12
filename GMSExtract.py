@@ -40,11 +40,27 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LAParams
+from multiprocessing import Pool
 from typing import List, Tuple
+import concurrent.futures
 from io import StringIO
+from time import time
 from glob import glob
 import sys
 import re
+
+out_file = None
+
+
+def timeit(func):
+    def inner_timeit(*args, **kwargs):
+        start = time()
+        return_value = func(*args, **kwargs)
+        print(f"[TIMEIT {func.__name__}]: {time() - start}s")
+
+        return return_value
+
+    return inner_timeit
 
 
 class GMSExtract:
@@ -56,6 +72,9 @@ class GMSExtract:
 
     OUTPUT_SEP = "\t"
 
+    USE_MULTIPROCESSING = True
+
+    # @timeit
     @staticmethod
     def read_pdf(filename: str) -> str:
         """
@@ -81,9 +100,14 @@ class GMSExtract:
         password = ""
         max_pages = 12
 
-        for page in PDFPage.get_pages(fp, page_numbers, maxpages=max_pages, password=password, caching=caching,
-                                      check_extractable=True):
-            interpreter.process_page(page)
+        try:
+
+            for page in PDFPage.get_pages(fp, page_numbers, maxpages=max_pages, password=password, caching=caching,
+                                          check_extractable=True):
+                interpreter.process_page(page)
+        except PDFTextExtractionNotAllowed:
+            print("Could not read " + filename + " : File is protected.")
+            return ""
 
         content_text = output_string.getvalue()
 
@@ -94,6 +118,7 @@ class GMSExtract:
         return content_text
 
     @staticmethod
+    @timeit
     def read_pdf_multiple(filenames: List[str]) -> List[str]:
         """
         Read contents of all files in filenames
@@ -103,17 +128,19 @@ class GMSExtract:
         """
         file_contents: List[str] = []
 
-        for filename in filenames:
+        if GMSExtract.USE_MULTIPROCESSING:
+            with Pool(len(filenames)) as executor:
+                file_contents = executor.map(GMSExtract.read_pdf, filenames)
 
-            try:
-                file_contents.append(GMSExtract.read_pdf(filename))
-            except PDFTextExtractionNotAllowed:
-                print("Could not read " + filename + " : File is protected.")
-                file_contents.append("")
+            return file_contents
+
+        for filename in filenames:
+            file_contents.append(GMSExtract.read_pdf(filename))
 
         return file_contents
 
     @staticmethod
+    @timeit
     def normalize_string(string: str) -> str:
         """
         Replace all linebreaks with whitespaces and normalize amount of whitespaces around '+' to exactly one
@@ -165,6 +192,7 @@ class GMSExtract:
         return "" if match == [] else match[0][-1]
 
     @staticmethod
+    @timeit
     def process(string: str) -> Tuple[List[str], List[str], List[str], str]:
         """
         Find all matches for H-/P-/EUH-Statements and WGK (Wassergefährdungsklasse) in the given input string.
@@ -182,6 +210,7 @@ class GMSExtract:
         return h_match, p_match, euh_match, wgk_match
 
     @staticmethod
+    @timeit
     def process_all(strings: List[str]) -> Tuple[List[List[str]], List[List[str]], List[List[str]], List[str]]:
         """
         Process each string in the passed list of strings as described in the process method
@@ -233,15 +262,24 @@ class GMSExtract:
         :param filename: Name of the file the H-/P-/EUH-Statements were taken from. Empty if not from file
         :return: formatted string containing the H-/P-/EUH-Statements and the WGK
         """
+        global out_file
+
         prefix = filename + "\t" if filename != "" else ""
 
         if len(h_match) + len(p_match) + len(euh_match) + len(wgk) == 0:
-            return prefix + "No Statements found.", False
+            return_string = prefix + "No Statements found."
+            out_file.write(return_string.encode('utf-8', 'ignore') + b"\n")
 
-        return prefix + GMSExtract.OUTPUT_SEP.join([", ".join(h_match), ", ".join(p_match),
-                                                    ", ".join(euh_match), wgk]), True
+            return return_string, False
+
+        return_string = prefix + GMSExtract.OUTPUT_SEP.join([", ".join(h_match), ", ".join(p_match),
+                                                             ", ".join(euh_match), wgk])
+        out_file.write(return_string.encode('utf-8', 'ignore') + b"\n")
+
+        return return_string, True
 
     @staticmethod
+    @timeit
     def string_excel_all(h_matches: List[List[str]], p_matches: List[List[str]], euh_matches: List[List[str]],
                          wgks: List[str], filenames: List[str]) -> str:
         """
@@ -287,6 +325,7 @@ def get_input() -> Tuple[List[str], List[str]]:
     while input_read != "" or input_buffer.strip() == "":
         if input_read == "quit":
             print("\nExit keyword detected. Terminating.")
+            out_file.close()
             sys.exit(0)
 
         input_read = input("> ")
@@ -308,7 +347,7 @@ def get_input() -> Tuple[List[str], List[str]]:
             if len(file_list) == 0:
                 raise FileNotFoundError("No files found.")
 
-            file_list = sorted(file_list)
+            file_list = sorted(file_list, key=str.casefold)
 
             return GMSExtract.read_pdf_multiple(file_list), file_list
         except FileNotFoundError:
@@ -318,21 +357,25 @@ def get_input() -> Tuple[List[str], List[str]]:
 
 if __name__ == '__main__':
     # Clear contents of output file
-    f = open("out.txt", "w+")
-    f.close()
+    out_file = open("out.txt", "w+")
+    out_file.close()
 
-    while True:
-        text_inputs, input_files = get_input()
+    try:
+        while True:
+            text_inputs, input_files = get_input()
 
-        input_files = list(map(lambda file: file.split("\\")[-1], input_files))
+            input_files = list(map(lambda file: file.split("\\")[-1], input_files))
 
-        print("\n" + "#" * 150 + "\n")
+            out_file = open("out.txt", "wb")
 
-        out_string = GMSExtract.string_excel_all(*GMSExtract.process_all(text_inputs), input_files)
-        print(out_string)
+            print("\n" + "#" * 150 + "\n")
 
-        with open("out.txt", "a") as out_file:
-            out_file.write(out_string)
-            out_file.write("\n\n")
+            out_string = GMSExtract.string_excel_all(*GMSExtract.process_all(text_inputs), input_files)
+            print(out_string)
 
-        print("\n" + "#" * 150 + "\n")
+            print("\n" + "#" * 150 + "\n")
+
+            out_file.close()
+    except Exception as error:
+        print("Unhandled Exception:", error)
+        out_file.close()
