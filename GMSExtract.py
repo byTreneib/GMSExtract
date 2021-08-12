@@ -192,10 +192,10 @@ class GMSExtract:
         match: List[str] = GMSExtract.wgk_pattern.findall(string) + GMSExtract.WGK_pattern.findall(string)
         return "" if match == [] else match[0][-1]
 
-    @staticmethod
-    def match_cas(string: str) -> str:
-        match: List[str] = GMSExtract.cas_pattern.findall(string)
-        return "" if match == [] else match[0].split()[-1].strip()
+    # @staticmethod
+    # def match_cas(string: str) -> str:
+    #     match: List[str] = GMSExtract.cas_pattern.findall(string)
+    #     return "" if match == [] else match[0].split()[-1].strip()
 
     @staticmethod
     # @timeit
@@ -213,7 +213,7 @@ class GMSExtract:
         euh_match = GMSExtract.match_euh(normalized_string)
         wgk_match = GMSExtract.match_wgk(normalized_string)
 
-        print(GMSExtract.match_cas(normalized_string))
+        # print(GMSExtract.match_cas(normalized_string))
 
         return h_match, p_match, euh_match, wgk_match
 
