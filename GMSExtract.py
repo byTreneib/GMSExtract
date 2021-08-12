@@ -72,7 +72,7 @@ class GMSExtract:
 
     OUTPUT_SEP = "\t"
 
-    USE_MULTIPROCESSING = False
+    USE_MULTIPROCESSING = True
 
     # @timeit
     @staticmethod
@@ -158,7 +158,7 @@ class GMSExtract:
         :param string: input string containing H-Statements
         :return: list of unique H-Statements as strings
         """
-        return list(set(GMSExtract.h_pattern.findall(string)))
+        return sorted(list(set(GMSExtract.h_pattern.findall(string))))
 
     @staticmethod
     def match_p(string: str) -> List[str]:
@@ -168,7 +168,7 @@ class GMSExtract:
         :param string: input string containing P-Statements
         :return: list of unique P-Statements as strings
         """
-        return list(set(GMSExtract.p_pattern.findall(string)))
+        return sorted(list(set(GMSExtract.p_pattern.findall(string))))
 
     @staticmethod
     def match_euh(string: str) -> List[str]:
@@ -178,7 +178,7 @@ class GMSExtract:
         :param string: input string containing EUH-Statements
         :return: list of unique EUH-Statements as strings
         """
-        return list(set(GMSExtract.euh_pattern.findall(string)))
+        return sorted(list(set(GMSExtract.euh_pattern.findall(string))))
 
     @staticmethod
     def match_wgk(string: str) -> str:
