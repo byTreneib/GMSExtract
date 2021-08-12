@@ -64,11 +64,12 @@ def timeit(func):
 
 
 class GMSExtract:
-    h_pattern = re.compile(r"(?:(?<!EU)H[0-9]{3})(?:\s*\+\s*(?<!EU)H[0-9]{3})*")
+    h_pattern = re.compile(r"(?:(?<!EU)H[0-9]{3}[dDfF]{1,2})(?:\s*\+\s*(?<!EU)H[0-9]{3}[dDfF]{1,2})*")
     p_pattern = re.compile(r"(?:P[0-9]{3})(?:\s*\+\s*P[0-9]{3})*")
     euh_pattern = re.compile(r"(?:EUH[0-9]{3})(?:\s*\+\s*EUH[0-9]{3})*")
     wgk_pattern = re.compile(r"WGK.*?[0-3]")
     WGK_pattern = re.compile(r"[Ww]assergefährdungsklasse.*?[0-3]")
+    # cas_pattern = re.compile(r"(?:CAS|cas)-[Nn](?:umme)?(?:UMME)?[rR]:?.*?[0-9]{1,4}-[0-9]{1,2}-[0-9]")
 
     OUTPUT_SEP = "\t"
 
@@ -192,6 +193,11 @@ class GMSExtract:
         return "" if match == [] else match[0][-1]
 
     @staticmethod
+    def match_cas(string: str) -> str:
+        match: List[str] = GMSExtract.cas_pattern.findall(string)
+        return "" if match == [] else match[0].split()[-1].strip()
+
+    @staticmethod
     # @timeit
     def process(string: str) -> Tuple[List[str], List[str], List[str], str]:
         """
@@ -206,6 +212,8 @@ class GMSExtract:
         p_match = GMSExtract.match_p(normalized_string)
         euh_match = GMSExtract.match_euh(normalized_string)
         wgk_match = GMSExtract.match_wgk(normalized_string)
+
+        print(GMSExtract.match_cas(normalized_string))
 
         return h_match, p_match, euh_match, wgk_match
 
