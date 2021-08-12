@@ -364,7 +364,7 @@ if __name__ == '__main__':
         while True:
             text_inputs, input_files = get_input()
 
-            input_files = list(map(lambda file: file.split("\\")[-1], input_files))
+            input_files = list(map(lambda file: file.replace("/", "\\").split("\\")[-1], input_files))
 
             out_file = open("out.txt", "ab+")
 
