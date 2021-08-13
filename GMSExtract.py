@@ -247,7 +247,7 @@ class GMSExtract:
         """
         Process each string in the passed list of strings as described in the process method
 
-        :param strings: list of input strings containing H-/P-/EUH-Statements
+        :param strings: list of input strings containing H-/P-/EUH-Statements, WGK and CAS-Number
         :return: three lists containing the lists of H-/P-/EUH-Statements from each file and a list of WGKs
         """
 
@@ -264,8 +264,8 @@ class GMSExtract:
     def print_excel(cas_match: List[str], h_match: List[str], p_match: List[str], euh_match: List[str], wgk: str,
                     filename: str) -> None:
         """
-        Print the H-/P-/EUH-Statements and the WGK (Wassergefährdungsklasse) in a manner that allow the output
-        string to be copy + pasted into excel
+        Print the H-/P-/EUH-Statements, the WGK (Wassergefährdungsklasse) and CAS-Numbers in a manner that allow the
+        output string to be copy + pasted into excel
 
         :param cas_match: List containing all matches for CAS-Numbers as described in match_cas
         :param h_match: List containing all matches for H-Statements as described in match_h
@@ -288,8 +288,8 @@ class GMSExtract:
     def string_excel(cas_match: List[str], h_match: List[str], p_match: List[str], euh_match: List[str],
                      wgk: str, filename: str) -> Tuple[str, bool]:
         """
-        Create string from the H-/P-/EUH-Statements and the WGK (Wassergefährdungsklasse) in a manner that allow the
-        returned string to be copy + pasted into excel
+        Create string from the H-/P-/EUH-Statements, the WGK (Wassergefährdungsklasse) and CAS-Numbers in a manner that
+        allow the returned string to be copy + pasted into excel
 
         :param cas_match: List containing all matches for CAS-Numbers as described in match_cas
         :param h_match: List containing all matches for H-Statements as described in match_h
@@ -320,8 +320,8 @@ class GMSExtract:
     def string_excel_all(cas_matches: List[List[str]], h_matches: List[List[str]], p_matches: List[List[str]],
                          euh_matches: List[List[str]], wgks: List[str], filenames: List[str]) -> str:
         """
-        Create string from the H-/P-/EUH-Statements and WGK from each file as described in the string_excel method and
-        concatenate them to a table-like output string.
+        Create string from the H-/P-/EUH-Statements, the WGK and CAS-Numbers from each file as described in the
+        string_excel method and concatenate them to a table-like output string.
 
         :param cas_matches: List containing all lists of matches for CAS-Numbers for each input file/text
         :param h_matches: List containing all lists of matches for H-Statements for each input file/text
@@ -397,6 +397,7 @@ if __name__ == '__main__':
         while True:
             text_inputs, input_files = get_input()
 
+            # Only show file name without path in output
             input_files = list(map(lambda file: file.replace("/", "\\").split("\\")[-1], input_files))
 
             out_file = open("out.txt", "ab+")
