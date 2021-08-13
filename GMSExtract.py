@@ -69,7 +69,7 @@ class GMSExtract:
     euh_pattern = re.compile(r"(?:EUH[0-9]{3}[dDfF]?)(?:\s*\+\s*EUH[0-9]{3}[dDfF]?)*")
     wgk_pattern = re.compile(r"WGK.*?[0-3]")
     WGK_pattern = re.compile(r"[Ww]assergefährdungsklasse.*?[0-3]")
-    cas_pattern = re.compile(r"(?:CAS|cas)-[Nn](?:umme)?(?:UMME)?[rR]:?.*?[0-9]{1,4}-[0-9]{1,2}-[0-9]")
+    cas_pattern = re.compile(r"[0-9]{1,8}-[0-9]{2}-[0-9](?![0-9])")
 
     OUTPUT_SEP = "\t"
 
@@ -193,13 +193,37 @@ class GMSExtract:
         return "" if match == [] else match[0][-1]
 
     @staticmethod
-    def match_cas(string: str) -> str:
+    def match_cas(string: str) -> List[str]:
+        """
+        Find all matches for CAS-Numbers in the given input string using regular expressions
+
+        :param string: input string containing CAS-Numbers
+        :return: list of unique CAS-Numbers as strings
+        """
         match: List[str] = GMSExtract.cas_pattern.findall(string)
-        return "" if match == [] else match[0].split()[-1].strip()
+        return sorted(list(set(filter(GMSExtract.is_cas_valid, match))))
+
+    @staticmethod
+    def is_cas_valid(cas: str) -> bool:
+        """
+        Check if the given CAS-Number is valid by calculating and checking the checksum according to
+        https://de.wikipedia.org/wiki/CAS-Nummer
+
+        :param cas: CAS-Number as string
+        :return: whether or not the given CAS-Number is valid
+        """
+        cas_split = cas.split("-")
+        numbers, checksum = "".join(cas_split[:-1]), int(cas_split[-1])
+
+        cas_sum = 0
+        for value, number in enumerate(reversed(numbers)):
+            cas_sum += (value + 1) * int(number)
+
+        return (cas_sum % 10) == checksum
 
     @staticmethod
     # @timeit
-    def process(string: str) -> Tuple[List[str], List[str], List[str], str]:
+    def process(string: str) -> Tuple[List[str], List[str], List[str], List[str], str]:
         """
         Find all matches for H-/P-/EUH-Statements and WGK (Wassergefährdungsklasse) in the given input string.
 
@@ -212,14 +236,14 @@ class GMSExtract:
         p_match = GMSExtract.match_p(normalized_string)
         euh_match = GMSExtract.match_euh(normalized_string)
         wgk_match = GMSExtract.match_wgk(normalized_string)
+        cas_match = GMSExtract.match_cas(normalized_string)
 
-        # print(GMSExtract.match_cas(normalized_string))
-
-        return h_match, p_match, euh_match, wgk_match
+        return cas_match, h_match, p_match, euh_match, wgk_match
 
     @staticmethod
     # @timeit
-    def process_all(strings: List[str]) -> Tuple[List[List[str]], List[List[str]], List[List[str]], List[str]]:
+    def process_all(strings: List[str]) -> Tuple[List[List[str]], List[List[str]], List[List[str]], List[List[str]],
+                                                 List[str]]:
         """
         Process each string in the passed list of strings as described in the process method
 
@@ -227,7 +251,8 @@ class GMSExtract:
         :return: three lists containing the lists of H-/P-/EUH-Statements from each file and a list of WGKs
         """
 
-        matches: Tuple[List[List[str]], List[List[str]], List[List[str]], List[str]] = ([], [], [], [])
+        matches: Tuple[List[List[str]], List[List[str]], List[List[str]], List[List[str]], List[str]] = \
+            ([], [], [], [], [])
 
         for string in strings:
             for index, match in enumerate(GMSExtract.process(string)):
@@ -236,11 +261,13 @@ class GMSExtract:
         return matches
 
     @staticmethod
-    def print_excel(h_match: List[str], p_match: List[str], euh_match: List[str], wgk: str, filename: str) -> None:
+    def print_excel(cas_match: List[str], h_match: List[str], p_match: List[str], euh_match: List[str], wgk: str,
+                    filename: str) -> None:
         """
         Print the H-/P-/EUH-Statements and the WGK (Wassergefährdungsklasse) in a manner that allow the output
         string to be copy + pasted into excel
 
+        :param cas_match: List containing all matches for CAS-Numbers as described in match_cas
         :param h_match: List containing all matches for H-Statements as described in match_h
         :param p_match: List containing all matches for P-Statements as described in match_p
         :param euh_match: List containing all matches for EUH-Statements as described in match_euh
@@ -248,21 +275,23 @@ class GMSExtract:
         :param filename: Name of the file the H-/P-/EUH-Statements were taken from. Empty if not from file
         """
 
-        if len(h_match) + len(p_match) + len(euh_match) + len(wgk) == 0:
+        if len(cas_match) + len(h_match) + len(p_match) + len(euh_match) + len(wgk) == 0:
             print(f"\nFinished extracting. No Statements were found{(' in ' + filename) if filename != '' else ''}.")
             return
 
         prefix = filename + ": \t" if filename != "" else ""
         print("\nFinished extracting. The following line can be copy + pasted into excel.")
-        print(prefix + GMSExtract.OUTPUT_SEP.join([", ".join(h_match), ", ".join(p_match), ", ".join(euh_match), wgk]))
+        print(prefix + GMSExtract.OUTPUT_SEP.join([", ".join(cas_match), ", ".join(h_match), ", ".join(p_match),
+                                                   ", ".join(euh_match), wgk]))
 
     @staticmethod
-    def string_excel(h_match: List[str], p_match: List[str], euh_match: List[str],
+    def string_excel(cas_match: List[str], h_match: List[str], p_match: List[str], euh_match: List[str],
                      wgk: str, filename: str) -> Tuple[str, bool]:
         """
         Create string from the H-/P-/EUH-Statements and the WGK (Wassergefährdungsklasse) in a manner that allow the
         returned string to be copy + pasted into excel
 
+        :param cas_match: List containing all matches for CAS-Numbers as described in match_cas
         :param h_match: List containing all matches for H-Statements as described in match_h
         :param p_match: List containing all matches for P-Statements as described in match_p
         :param euh_match: List containing all matches for EUH-Statements as described in match_euh
@@ -280,20 +309,21 @@ class GMSExtract:
 
             return return_string, False
 
-        return_string = prefix + GMSExtract.OUTPUT_SEP.join([", ".join(h_match), ", ".join(p_match),
-                                                             ", ".join(euh_match), wgk])
+        return_string = prefix + GMSExtract.OUTPUT_SEP.join([", ".join(cas_match), ", ".join(h_match),
+                                                             ", ".join(p_match), ", ".join(euh_match), wgk])
         out_file.write(return_string.encode('utf-8', 'ignore') + b"\n")
 
         return return_string, True
 
     @staticmethod
     # @timeit
-    def string_excel_all(h_matches: List[List[str]], p_matches: List[List[str]], euh_matches: List[List[str]],
-                         wgks: List[str], filenames: List[str]) -> str:
+    def string_excel_all(cas_matches: List[List[str]], h_matches: List[List[str]], p_matches: List[List[str]],
+                         euh_matches: List[List[str]], wgks: List[str], filenames: List[str]) -> str:
         """
         Create string from the H-/P-/EUH-Statements and WGK from each file as described in the string_excel method and
         concatenate them to a table-like output string.
 
+        :param cas_matches: List containing all lists of matches for CAS-Numbers for each input file/text
         :param h_matches: List containing all lists of matches for H-Statements for each input file/text
         :param p_matches: List containing all lists of matches for P-Statements for each input file/text
         :param euh_matches: List containing all lists of matches for EUH-Statements for each input file/text
@@ -302,17 +332,12 @@ class GMSExtract:
         :return: Concatenated table-like string containing formatted data on all input files/texts
         """
         found_statements: List[str] = []
-        not_found_statements: List[str] = []
 
-        for values in zip(h_matches, p_matches, euh_matches, wgks, filenames):
+        for values in zip(cas_matches, h_matches, p_matches, euh_matches, wgks, filenames):
             string, found = GMSExtract.string_excel(*values)
+            found_statements.append(string)
 
-            if found:
-                found_statements.append(string)
-            else:
-                found_statements.append(string)
-
-        return "\n".join(found_statements + not_found_statements)
+        return "\n".join(found_statements)
 
 
 def get_input() -> Tuple[List[str], List[str]]:
