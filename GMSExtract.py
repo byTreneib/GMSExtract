@@ -42,7 +42,6 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LAParams
 from multiprocessing import Pool
 from typing import List, Tuple
-import concurrent.futures
 from io import StringIO
 from time import time
 from glob import glob
