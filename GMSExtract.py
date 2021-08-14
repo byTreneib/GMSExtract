@@ -107,7 +107,7 @@ class GMSExtract:
                                           check_extractable=True):
                 interpreter.process_page(page)
         except PDFTextExtractionNotAllowed:
-            print("Could not read " + filename + " : File is protected.")
+            # print("Could not read " + filename + " : File is protected.")
             return ""
 
         content_text = output_string.getvalue()
@@ -230,6 +230,11 @@ class GMSExtract:
         :param string: input string containing H-/P-/EUH-Statements
         :return: three lists containing the H-/P-/EUH-Statements as described in the designated methods and WGK
         """
+
+        if string == "":
+            h_match = ["Could not read. File is protected."]
+            return [], h_match, [], [], ""
+
         normalized_string: str = GMSExtract.normalize_string(string)
 
         h_match = GMSExtract.match_h(normalized_string)
