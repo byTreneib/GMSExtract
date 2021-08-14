@@ -64,11 +64,12 @@ def timeit(func):
 
 
 class GMSExtract:
-    h_pattern = re.compile(r"(?:(?<!EU)H[0-9]{3}[dDfF]{0,2})(?:\s*\+\s*(?<!EU)H[0-9]{3}[dDfF]{0,2})*")
-    p_pattern = re.compile(r"(?:P[0-9]{3})(?:\s*\+\s*P[0-9]{3})*")
-    euh_pattern = re.compile(r"(?:EUH[0-9]{3}[dDfF]?)(?:\s*\+\s*EUH[0-9]{3}[dDfF]?)*")
-    wgk_pattern = re.compile(r"WGK.*?[0-3]")
-    WGK_pattern = re.compile(r"[Ww]assergefährdungsklasse.*?[0-3]")
+    h_pattern = re.compile(r"(?:(?<!EU)H[2-4][0-9]{2}[dDfF]{0,2}(?![0-9]))"
+                           r"(?:\s*\+\s*(?<!EU)H[2-4][0-9]{2}[dDfF]{0,2}(?![0-9]))*")
+    p_pattern = re.compile(r"(?:P[1-5][0-9]{2}(?![0-9]))(?:\s*\+\s*P[1-5][0-9]{2}(?![0-9]))*")
+    euh_pattern = re.compile(r"(?:EUH[0-9]{3}[dDfF]?(?![0-9]))(?:\s*\+\s*EUH[0-9]{3}[dDfF]?(?![0-9]))*")
+    wgk_pattern = re.compile(r"WGK.*?[0-3](?![0-9])")
+    WGK_pattern = re.compile(r"[Ww]assergefährdungsklasse.*?[0-3](?![0-9])")
     cas_pattern = re.compile(r"[0-9]{1,8}-[0-9]{2}-[0-9](?![0-9])")
 
     OUTPUT_SEP = "\t"
